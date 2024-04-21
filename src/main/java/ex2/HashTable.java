@@ -1,17 +1,15 @@
 package ex2;
 
-import java.util.ArrayList;
-
 public class HashTable {
     private int SIZE = 16;
     private int ITEMS = 0;
     private HashEntry[] entries = new HashEntry[SIZE];
 
-    public int count(){
+    public int count() {
         return this.ITEMS;
     }
 
-    public int size(){
+    public int size() {
         return this.SIZE;
     }
 
@@ -19,29 +17,32 @@ public class HashTable {
         int hash = getHash(key);
         final HashEntry hashEntry = new HashEntry(key, value);
 
-        if(entries[hash] == null) {
+        if (entries[hash] == null) {
             entries[hash] = hashEntry;
-            ITEMS++;  // Incrementar el contador de ITEMS
-        }
-        else {
+            ITEMS++;
+        } else {
             HashEntry temp = entries[hash];
-            while(temp.next != null)
+            while (temp.next != null && !temp.key.equals(key))
                 temp = temp.next;
 
-            temp.next = hashEntry;
-            hashEntry.prev = temp;
+            if (temp.key.equals(key)) {
+                temp.value = value;  // Actualitzar el valor si la clau ja existeix
+            } else {
+                temp.next = hashEntry;
+                hashEntry.prev = temp;
+                ITEMS++;
+            }
         }
     }
 
     public String get(String key) {
         int hash = getHash(key);
-        if(entries[hash] != null) {
-            HashEntry temp = entries[hash];
+        HashEntry temp = entries[hash];
 
-            while( !temp.key.equals(key))
-                temp = temp.next;
-
-            return temp.value;
+        while (temp != null) {
+            if (temp.key.equals(key))
+                return temp.value;
+            temp = temp.next;
         }
 
         return null;
@@ -49,23 +50,27 @@ public class HashTable {
 
     public void drop(String key) {
         int hash = getHash(key);
-        if(entries[hash] != null) {
+        HashEntry temp = entries[hash];
 
-            HashEntry temp = entries[hash];
-            while( !temp.key.equals(key))
-                temp = temp.next;
+        while (temp != null && !temp.key.equals(key))
+            temp = temp.next;
 
-            if(temp.prev == null) entries[hash] = null;
-            else{
-                if(temp.next != null) temp.next.prev = temp.prev;
-                temp.prev.next = temp.next;
-            }
-            ITEMS--;  // Decrementar el contador de ITEMS
+        if (temp == null) return;
+
+        if (temp.prev == null) {
+            entries[hash] = temp.next;
+        } else {
+            temp.prev.next = temp.next;
         }
+
+        if (temp.next != null) {
+            temp.next.prev = temp.prev;
+        }
+        ITEMS--;
     }
 
     private int getHash(String key) {
-        return key.hashCode() % SIZE;
+        return Math.abs(key.hashCode() % SIZE);
     }
 
     private class HashEntry {
@@ -89,25 +94,15 @@ public class HashTable {
 
     @Override
     public String toString() {
-        int bucket = 0;
         StringBuilder hashTableStr = new StringBuilder();
-        for (HashEntry entry : entries) {
-            if(entry == null) {
-                bucket++;
-                continue;
+        for (int i = 0; i < SIZE; i++) {
+            HashEntry entry = entries[i];
+            hashTableStr.append("bucket[").append(i).append("] = ");
+            while (entry != null) {
+                hashTableStr.append(entry.toString()).append(" -> ");
+                entry = entry.next;
             }
-
-            hashTableStr.append("\n bucket[")
-                    .append(bucket)
-                    .append("] = ")
-                    .append(entry.toString());
-            bucket++;
-            HashEntry temp = entry.next;
-            while(temp != null) {
-                hashTableStr.append(" -> ");
-                hashTableStr.append(temp.toString());
-                temp = temp.next;
-            }
+            hashTableStr.append("null\n");
         }
         return hashTableStr.toString();
     }
@@ -123,8 +118,12 @@ public class HashTable {
         HashTable ht = new HashTable();
         ht.put("1", "one");
         ht.put("2", "two");
-        ht.put("17", "seventeen");  // colisión con "1"
-        ht.put("33", "thirty-three");  // colisión con "1" y "17"
+        ht.put("17", "seventeen");
+        ht.put("33", "thirty-three");
+        ht.put("1", "updated one");
+        ht.put("17", "updated seventeen");
+        ht.put("17", "updated seventeen again");
+        ht.put("17", "updated seventeen yet again");
 
         System.out.println("After put:");
         System.out.println(ht.toString());
@@ -139,6 +138,11 @@ public class HashTable {
         System.out.println("Get value for key '1': " + ht.get("1"));
         System.out.println("Get value for key '17': " + ht.get("17"));
         System.out.println("Get value for key '33': " + ht.get("33"));  // Debería ser null
+        System.out.println("Get value for key '4': " + ht.get("4"));    // Debería ser null
+        System.out.println("Get value for key '2': " + ht.get("2"));
+        System.out.println("Get value for key '33': " + ht.get("33"));
+        System.out.println("Get value for key '17': " + ht.get("17"));
+        System.out.println("Get value for key '1': " + ht.get("1"));
     }
 
     public static void testDrop() {
@@ -146,8 +150,11 @@ public class HashTable {
         ht.put("1", "one");
         ht.put("2", "two");
         ht.put("17", "seventeen");
+        ht.put("33", "thirty-three");
 
         ht.drop("1");
+        ht.drop("17");
+        ht.drop("33");
 
         System.out.println("After drop:");
         System.out.println(ht.toString());
@@ -158,8 +165,16 @@ public class HashTable {
         ht.put("1", "one");
         ht.put("2", "two");
         ht.put("17", "seventeen");
+        ht.put("33", "thirty-three");
 
-        System.out.println("Count: " + ht.count());  // Debería ser 3
-        System.out.println("Size: " + ht.size());  // Debería ser 16
+        System.out.println("Count: " + ht.count());
+        System.out.println("Size: " + ht.size());
+
+        ht.drop("1");
+        ht.drop("17");
+        ht.drop("33");
+
+        System.out.println("Count: " + ht.count());
+        System.out.println("Size: " + ht.size());
     }
 }
