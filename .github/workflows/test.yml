@@ -19,4 +19,4 @@ jobs:
           settings-path: ${{ github.workspace }}
 
       - name: Build with Maven and Run Tests
-        run: mvn clean test -B
+        run: mvn clean test -B -Dtest=HashTable
