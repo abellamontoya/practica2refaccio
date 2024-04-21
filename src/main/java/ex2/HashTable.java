@@ -1,95 +1,76 @@
 package ex2;
 
+import java.util.ArrayList;
+
 public class HashTable {
-    private int SIZE = 16;
-    private int ITEMS = 0;
+    private int SIZE = 10;  // Mida de la taula de hash
     private HashEntry[] entries = new HashEntry[SIZE];
 
-    public int count() {
-        return this.ITEMS;
-    }
+    public void put(int key, Object value) {
+        int hash = key % SIZE;
 
-    public int size() {
-        return this.SIZE;
-    }
-
-    public void put(String key, String value) {
-        int hash = getHash(key);
-        final HashEntry hashEntry = new HashEntry(key, value);
+        HashEntry entry = new HashEntry(key, value);
 
         if (entries[hash] == null) {
-            entries[hash] = hashEntry;
-            ITEMS++;
+            entries[hash] = entry;
         } else {
             HashEntry temp = entries[hash];
-            while (temp.next != null && !temp.key.equals(key))
+            while (temp.next != null && temp.key != key)
                 temp = temp.next;
 
-            if (temp.key.equals(key)) {
+            if (temp.key == key) {
                 temp.value = value;  // Actualitzar el valor si la clau ja existeix
             } else {
-                temp.next = hashEntry;
-                hashEntry.prev = temp;
-                ITEMS++;
+                temp.next = entry;
             }
         }
     }
 
-    public String get(String key) {
-        int hash = getHash(key);
+    public Object get(int key) {
+        int hash = key % SIZE;
         HashEntry temp = entries[hash];
 
         while (temp != null) {
-            if (temp.key.equals(key))
+            if (temp.key == key)
                 return temp.value;
             temp = temp.next;
         }
-
-        return null;
+        return null;  // Retorna null si no es troba
     }
 
-    public void drop(String key) {
-        int hash = getHash(key);
+    public void drop(int key) {
+        int hash = key % SIZE;
         HashEntry temp = entries[hash];
+        HashEntry prev = null;
 
-        while (temp != null && !temp.key.equals(key))
+        while (temp != null && temp.key != key) {
+            prev = temp;
             temp = temp.next;
+        }
 
         if (temp == null) return;
 
-        if (temp.prev == null) {
+        if (prev == null) {
             entries[hash] = temp.next;
         } else {
-            temp.prev.next = temp.next;
+            prev.next = temp.next;
         }
-
-        if (temp.next != null) {
-            temp.next.prev = temp.prev;
-        }
-        ITEMS--;
     }
 
-    private int getHash(String key) {
-        return Math.abs(key.hashCode() % SIZE);
+    public int count() {
+        int count = 0;
+        for (HashEntry entry : entries) {
+            HashEntry temp = entry;
+            while (temp != null) {
+                count++;
+                temp = temp.next;
+            }
+        }
+        return count;
     }
 
-    private class HashEntry {
-        String key;
-        String value;
-        HashEntry next;
-        HashEntry prev;
-
-        public HashEntry(String key, String value) {
-            this.key = key;
-            this.value = value;
-            this.next = null;
-            this.prev = null;
-        }
-
-        @Override
-        public String toString() {
-            return "[" + key + ", " + value + "]";
-        }
+    public int size() {
+        return SIZE;
     }
 
     @Override
@@ -97,84 +78,60 @@ public class HashTable {
         StringBuilder hashTableStr = new StringBuilder();
         for (int i = 0; i < SIZE; i++) {
             HashEntry entry = entries[i];
-            hashTableStr.append("bucket[").append(i).append("] = ");
+            hashTableStr.append("[")
+                    .append(i)
+                    .append("] -> ");
             while (entry != null) {
-                hashTableStr.append(entry.toString()).append(" -> ");
+                hashTableStr.append("<")
+                        .append(entry.key)
+                        .append(", ")
+                        .append(entry.value)
+                        .append("> ");
                 entry = entry.next;
             }
-            hashTableStr.append("null\n");
+            hashTableStr.append("\n");
         }
         return hashTableStr.toString();
     }
 
+    private static class HashEntry {
+        int key;
+        Object value;
+        HashEntry next;
+
+        public HashEntry(int key, Object value) {
+            this.key = key;
+            this.value = value;
+            this.next = null;
+        }
+    }
+
     public static void main(String[] args) {
-        testPut();
-        testGet();
-        testDrop();
-        testCountAndSize();
-    }
-
-    public static void testPut() {
         HashTable ht = new HashTable();
-        ht.put("1", "one");
-        ht.put("2", "two");
-        ht.put("17", "seventeen");
-        ht.put("33", "thirty-three");
-        ht.put("1", "updated one");
-        ht.put("17", "updated seventeen");
-        ht.put("17", "updated seventeen again");
-        ht.put("17", "updated seventeen yet again");
 
-        System.out.println("After put:");
-        System.out.println(ht.toString());
-    }
+        // Proves per "put"
+        ht.put(99, "p1");
+        ht.put(21, "p2");
+        ht.put(2, "p3");
+        ht.put(2, "p4");
+        ht.put(21, "p5");
 
-    public static void testGet() {
-        HashTable ht = new HashTable();
-        ht.put("1", "one");
-        ht.put("2", "two");
-        ht.put("17", "seventeen");
+        System.out.println("Després de put:");
+        System.out.println(ht);
 
-        System.out.println("Get value for key '1': " + ht.get("1"));
-        System.out.println("Get value for key '17': " + ht.get("17"));
-        System.out.println("Get value for key '33': " + ht.get("33"));  // Debería ser null
-        System.out.println("Get value for key '4': " + ht.get("4"));    // Debería ser null
-        System.out.println("Get value for key '2': " + ht.get("2"));
-        System.out.println("Get value for key '33': " + ht.get("33"));
-        System.out.println("Get value for key '17': " + ht.get("17"));
-        System.out.println("Get value for key '1': " + ht.get("1"));
-    }
+        // Proves per "get"
+        System.out.println("Obtenir 99: " + ht.get(99));  // p1
+        System.out.println("Obtenir 2: " + ht.get(2));    // p4
 
-    public static void testDrop() {
-        HashTable ht = new HashTable();
-        ht.put("1", "one");
-        ht.put("2", "two");
-        ht.put("17", "seventeen");
-        ht.put("33", "thirty-three");
+        // Proves per "drop"
+        ht.drop(99);
+        ht.drop(2);
 
-        ht.drop("1");
-        ht.drop("17");
-        ht.drop("33");
+        System.out.println("Després de drop:");
+        System.out.println(ht);
 
-        System.out.println("After drop:");
-        System.out.println(ht.toString());
-    }
-
-    public static void testCountAndSize() {
-        HashTable ht = new HashTable();
-        ht.put("1", "one");
-        ht.put("2", "two");
-        ht.put("17", "seventeen");
-        ht.put("33", "thirty-three");
-
-        System.out.println("Count: " + ht.count());
-        System.out.println("Size: " + ht.size());
-
-        ht.drop("1");
-        ht.drop("17");
-        ht.drop("33");
-
-        System.out.println("Count: " + ht.count());
-        System.out.println("Size: " + ht.size());
+        // Comprovar count i size
+        System.out.println("Count: " + ht.count());  // Esperat: 3
+        System.out.println("Size: " + ht.size());    // Esperat: 10
     }
 }
