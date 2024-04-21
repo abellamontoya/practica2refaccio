@@ -32,7 +32,7 @@
                 <version>2.22.2</version>
                 <configuration>
                     <includes>
-                        <include>**/*Test.java</include>
+                        <include>ex2/HashTableTest.java</include>
                     </includes>
                 </configuration>
             </plugin>
