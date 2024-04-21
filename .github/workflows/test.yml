@@ -19,8 +19,4 @@ jobs:
           settings-path: ${{ github.workspace }}
 
       - name: Build with Maven and Run Tests
-        run: mvn clean install
-        shell: bash
-
-      - name: Run Tests with HashTable
-        run: mvn exec:exec -Dexec.executable="echo" -Dexec.args="'-Dtest=HashTable'"
+        run: mvn clean test -B -Dtest=HashTableTest
